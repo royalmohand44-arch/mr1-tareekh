@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberShield Suite</title>
+<link href="https://googleapis.com" rel="stylesheet">
+<style>
+  :root { --bg:#0b0f19; --card:#131b2e; --accent:#00f2fe; --accent2:#4facfe; --text:#e2e8f0; --danger:#ff4b5c; --warn:#ffb400; --safe:#00e676; }
+  * { box-sizing:border-box; font-family:'Cairo',sans-serif; }
+  body { background:var(--bg); color:var(--text); margin:0; padding:16px; display:flex; justify-content:center; align-items:center; min-height:100vh; }
+  .container { background:var(--card); width:100%; max-width:540px; padding:24px; border-radius:22px; box-shadow:0 15px 35px rgba(0,242,254,0.12); border:1px solid rgba(0,242,254,0.2); }
+  h1 { text-align:center; margin:0 0 16px; font-size:1.55rem; background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .tabs { display:flex; gap:8px; background:#0f172a; padding:6px; border-radius:14px; margin-bottom:20px; border:1px solid #1e293b; }
+  .tab { flex:1; padding:10px; text-align:center; border-radius:10px; cursor:pointer; font-weight:700; font-size:0.9rem; color:#94a3b8; transition:0.3s; }
+  .tab.active { background:linear-gradient(90deg,var(--accent2),var(--accent)); color:#0b0f19; }
+  .section { display:none; } .section.active { display:block; }
+  input, textarea { width:100%; padding:13px 15px; border-radius:12px; border:2px solid #1e293b; background:#0f172a; color:#fff; font-size:1rem; outline:none; margin-bottom:12px; }
+  textarea { resize:vertical; min-height:95px; } .ltr { direction:ltr; text-align:left; }
+  .bar-bg { height:10px; background:#1e293b; border-radius:10px; overflow:hidden; margin-bottom:16px; }
+  .bar-fill { height:100%; width:0%; transition:0.4s; border-radius:10px; }
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+  .stat-card { background:#0f172a; padding:12px; border-radius:12px; border:1px solid #1e293b; text-align:center; }
+  .stat-card span { display:block; font-size:0.8rem; color:#94a3b8; } .stat-card strong { font-size:1rem; color:var(--accent); }
+  .checks { display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.85rem; margin-bottom:20px; color:#64748b; }
+  .checks div.ok { color:var(--safe); font-weight:bold; }
+  .btns { display:flex; gap:10px; margin-bottom:12px; }
+  button { flex:1; padding:13px; border:none; border-radius:12px; font-size:0.95rem; font-weight:700; cursor:pointer; }
+  .btn-primary { background:linear-gradient(90deg,var(--accent2),var(--accent)); color:#0b0f19; }
+  .btn-sec { background:#1e293b; color:#fff; }
+  .result-box { background:#090d16; border:1px dashed var(--accent); padding:12px; border-radius:12px; word-break:break-all; font-size:0.85rem; color:var(--safe); min-height:50px; margin-top:8px; }
+</style></head>
+<body><div class="container">
+  <h1>🛡️ CyberShield Suite</h1>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(0)">🔑 فحص الباسورد</div>
+    <div class="tab" onclick="switchTab(1)">🔐 تشفير AES-256</div>
+  <div class="tab" onclick="switchTab(2)">🕵️ فحص الروابط</div></div>
+  <div class="section active" id="sec-0">
+    <input type="text" id="pw" class="ltr" placeholder="اكتب كلمة مرور أو اضغط توليد..." oninput="analyze()">
+    <div class="bar-bg"><div class="bar-fill" id="bar"></div></div>
+    <div class="stats">
+      <div class="stat-card"><span>التقييم الأمني</span><strong id="rating">في انتظار الإدخال</strong></div>
+      <div class="stat-card"><span>الوقت المقدر للكسر</span><strong id="crackTime">-</strong></div>
+    </div>
+    <div class="checks">
+      <div id="c-len">✖ 12 حرف على الأقل</div><div id="c-up">✖ حروف كبيرة (A-Z)</div>
+      <div id="c-num">✖ أرقام (0-9)</div><div id="c-sym">✖ رموز خاصة (!@#$)</div>
+    </div>
+    <div class="btns">
+      <button class="btn-primary" onclick="generate()">⚡ توليد باسورد خارق</button>
+      <button class="btn-sec" style="flex:0.4" onclick="copyText('pw', this)">نسخ</button>
+    </div>
+  </div>
+  <div class="section" id="sec-1">
+    <textarea id="msg" placeholder="اكتب الرسالة السرية هنا (أو الصق النص المشفر لفكه)..."></textarea>
+    <input type="password" id="secretKey" placeholder="اكتب المفتاح السري (كلمة سر التشفير)...">
+    <div class="btns">
+      <button class="btn-primary" onclick="processCrypto(true)">🔒 تشفير الرسالة</button>
+      <button class="btn-sec" onclick="processCrypto(false)">🔓 فك التشفير</button>
+    </div>
+    <div class="result-box ltr" id="cryptoOut">النتيجة ستظهر هنا...</div>
+    <button class="btn-sec" style="width:100%;margin-top:10px;" onclick="copyDiv('cryptoOut', this)">📋 نسخ النتيجة</button>
+  </div>
+<div class="section" id="sec-2"><input type="text" id="uIn" class="ltr" placeholder="الصق الرابط المشبوه (مثل: http://paypa1.xyz)..."><button class="btn-primary" style="width:100%;margin-bottom:12px" onclick="scan()">🔍 فحص الرابط</button><div class="stat-card"><strong id="uSt">في انتظار الرابط</strong></div><div id="uFl" style="margin-top:10px;font-size:0.85rem"></div></div></div>
+<script>
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  document.querySelectorAll('.section').forEach((s, i) => s.classList.toggle('active', i === idx));
+}
+function analyze() {
+  const v = document.getElementById('pw').value, bar = document.getElementById('bar'), rating = document.getElementById('rating'), crack = document.getElementById('crackTime');
+  const hasLen = v.length >= 12, hasUp = /[A-Z]/.test(v), hasNum = /[0-9]/.test(v), hasSym = /[^A-Za-z0-9]/.test(v);
+  setCheck('c-len', hasLen, '12 حرف على الأقل'); setCheck('c-up', hasUp, 'حروف كبيرة (A-Z)');
+  setCheck('c-num', hasNum, 'أرقام (0-9)'); setCheck('c-sym', hasSym, 'رموز خاصة (!@#$)');
+  if (!v) { bar.style.width = '0%'; rating.innerText = 'في انتظار الإدخال'; rating.style.color = '#00f2fe'; crack.innerText = '-'; return; }
+  let pool = (/[a-z]/.test(v)?26:0) + (hasUp?26:0) + (hasNum?10:0) + (hasSym?32:0);
+  const seconds = Math.pow(pool || 1, v.length) / 1e10;
+  let score = (hasLen?25:0) + (hasUp?25:0) + (hasNum?25:0) + (hasSym?25:0);
+  if (v.length < 8) score = Math.min(score, 25);
+  bar.style.width = score + '%';
+  if (score <= 25) { bar.style.background = 'var(--danger)'; rating.innerText = 'ضعيفة جداً'; rating.style.color = 'var(--danger)'; }
+  else if (score <= 50) { bar.style.background = 'var(--warn)'; rating.innerText = 'متوسطة'; rating.style.color = 'var(--warn)'; }
+  else if (score <= 75) { bar.style.background = '#38bdf8'; rating.innerText = 'جيدة'; rating.style.color = '#38bdf8'; }
+  else { bar.style.background = 'var(--safe)'; rating.innerText = 'خارقة 🛡️'; rating.style.color = 'var(--safe)'; }
+  crack.innerText = formatTime(seconds);
+}
+function setCheck(id, ok, text) { const el = document.getElementById(id); el.className = ok ? 'ok' : ''; el.innerText = (ok ? '✔ ' : '✖ ') + text; }
+function formatTime(s) {
+  if (s < 0.01) return 'فوري (أقل من ثانية!)'; if (s < 60) return Math.round(s) + ' ثانية';
+  if (s < 3600) return Math.round(s/60) + ' دقيقة'; if (s < 86400) return Math.round(s/3600) + ' ساعة';
+  if (s < 31536000) return Math.round(s/86400) + ' يوم'; const years = s / 31536000;
+  if (years > 1e9) return 'مليارات السنين'; if (years > 1e6) return Math.round(years/1e6) + ' مليون سنة';
+  return Math.round(years).toLocaleString() + ' سنة';
+}
+function generate() {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*_-+=';
+  let res = ''; const arr = new Uint32Array(18); window.crypto.getRandomValues(arr);
+  for (let i = 0; i < 18; i++) res += chars[arr[i] % chars.length];
+  document.getElementById('pw').value = res; analyze();
+}
+async function getKey(pass) {
+  const enc = new TextEncoder();
+  const keyMat = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt: enc.encode("CyberShieldSalt"), iterations: 100000, hash: "SHA-256" }, keyMat, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+}
+async function processCrypto(isEncrypt) {
+  const text = document.getElementById('msg').value.trim(), pass = document.getElementById('secretKey').value, out = document.getElementById('cryptoOut');
+  if (!text || !pass) { out.style.color = 'var(--warn)'; out.innerText = '⚠️ اكتب الرسالة والمفتاح السري أولاً!'; return; }
+  try {
+    const key = await getKey(pass);
+    if (isEncrypt) {
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const enc = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(text));
+      const combined = new Uint8Array(iv.length + enc.byteLength); combined.set(iv); combined.set(new Uint8Array(enc), iv.length);
+      out.style.color = 'var(--safe)'; out.innerText = btoa(String.fromCharCode(...combined));
+    } else {
+      const raw = Uint8Array.from(atob(text), c => c.charCodeAt(0));
+      const dec = await crypto.subtle.decrypt({ name: "AES-GCM", iv: raw.slice(0, 12) }, key, raw.slice(12));
+      out.style.color = 'var(--accent)'; out.innerText = new TextDecoder().decode(dec);
+    }
+  } catch (e) { out.style.color = 'var(--danger)'; out.innerText = '❌ فشل فك التشفير! المفتاح السري غلط.'; }
+}
+function copyText(id, btn) { const v = document.getElementById(id).value; if(v){ navigator.clipboard.writeText(v); btn.innerText='تم!'; setTimeout(()=>btn.innerText='نسخ',1200); } }
+function copyDiv(id, btn) { const v = document.getElementById(id).innerText; if(v && !v.includes('ستظهر')){ navigator.clipboard.writeText(v); btn.innerText='✔ تم النسخ!'; setTimeout(()=>btn.innerText='📋 نسخ النتيجة',1200); } }
+function scan(){let r=document.getElementById("uIn").value.trim(),s=document.getElementById("uSt"),b=document.getElementById("uFl");b.innerHTML="";if(!r)return;if(!/^https?:\/\//i.test(r))r="http://"+r;let u;try{u=new URL(r)}catch(e){s.innerText="❌ رابط غير صالح";return}let k=0,f=[];if(u.protocol=="http:"){k+=30;f.push("⚠️ غير مشفر (HTTP)")}else f.push("✔ مشفر (HTTPS)");if(/(\d{1,3}\.){3}\d{1,3}/.test(u.hostname)||r.includes("@")){k+=50;f.push("🚨 IP مباشر أو خدعة @")}if(/\.(xyz|tk|top|click|zip)$/i.test(u.hostname)){k+=40;f.push("🚨 امتداد نطاق مشبوه")}if(/(faceb00k|paypa1|g00gle|gift|vodaf0ne)/i.test(u.hostname)){k+=50;f.push("🚨 تقليد موقع مشهور!")}s.innerText=k==0?"✅ يبدو آمناً":k<45?"⚠️ مشبوه ("+k+"%)":"🚨 خطر مرتفع! ("+Math.min(k,100)+"%)";s.style.color=k==0?"var(--safe)":k<45?"var(--warn)":"var(--danger)";f.forEach(x=>b.innerHTML+="<div style=padding:6px;background:#0f172a;margin-top:5px;border-radius:8px>"+x+"</div>")}</script></body></html>
